@@ -1,0 +1,41 @@
+syntax = "proto3";
+
+package coordinator;
+
+option go_package = "coordinator.v1";
+
+service Coordinator {
+  rpc Prepare(PrepareRequest) returns (PrepareResponse);
+  rpc Commit(TxRequest) returns (Ack);
+  rpc PreCommit(TxRequest) returns (Ack);
+  rpc DoCommit(TxRequest) returns (Ack);
+}
+
+service Participant {
+  rpc CanCommit(PrepareRequest) returns (PrepareResponse);
+  rpc DoCommit(TxRequest) returns (Ack);
+  rpc DoAbort(TxRequest) returns (Ack);
+}
+
+message PrepareRequest {
+  string tx_id = 1;
+}
+
+message PrepareResponse {
+  enum Vote {
+    VOTE_UNSPECIFIED = 0;
+    VOTE_COMMIT = 1;
+    VOTE_ABORT = 2;
+  }
+  Vote vote = 1;
+}
+
+message TxRequest {
+  string tx_id = 1;
+}
+
+message Ack {
+  bool success = 1;
+  string message = 2;
+}
+
