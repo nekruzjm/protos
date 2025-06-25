@@ -7,6 +7,7 @@ option go_package = "coordinator.v1";
 service Coordinator {
   rpc Prepare(PrepareRequest) returns (PrepareResponse);
   rpc Commit(TxRequest) returns (Ack);
+  rpc Abort(TxRequest)           returns (Ack);
   rpc PreCommit(TxRequest) returns (Ack);
   rpc DoCommit(TxRequest) returns (Ack);
 }

@@ -21,6 +21,7 @@ const _ = grpc.SupportPackageIsVersion9
 const (
 	Coordinator_Prepare_FullMethodName   = "/coordinator.Coordinator/Prepare"
 	Coordinator_Commit_FullMethodName    = "/coordinator.Coordinator/Commit"
+	Coordinator_Abort_FullMethodName     = "/coordinator.Coordinator/Abort"
 	Coordinator_PreCommit_FullMethodName = "/coordinator.Coordinator/PreCommit"
 	Coordinator_DoCommit_FullMethodName  = "/coordinator.Coordinator/DoCommit"
 )
@@ -31,6 +32,7 @@ const (
 type CoordinatorClient interface {
 	Prepare(ctx context.Context, in *PrepareRequest, opts ...grpc.CallOption) (*PrepareResponse, error)
 	Commit(ctx context.Context, in *TxRequest, opts ...grpc.CallOption) (*Ack, error)
+	Abort(ctx context.Context, in *TxRequest, opts ...grpc.CallOption) (*Ack, error)
 	PreCommit(ctx context.Context, in *TxRequest, opts ...grpc.CallOption) (*Ack, error)
 	DoCommit(ctx context.Context, in *TxRequest, opts ...grpc.CallOption) (*Ack, error)
 }
@@ -63,6 +65,16 @@ func (c *coordinatorClient) Commit(ctx context.Context, in *TxRequest, opts ...g
 	return out, nil
 }
 
+func (c *coordinatorClient) Abort(ctx context.Context, in *TxRequest, opts ...grpc.CallOption) (*Ack, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(Ack)
+	err := c.cc.Invoke(ctx, Coordinator_Abort_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *coordinatorClient) PreCommit(ctx context.Context, in *TxRequest, opts ...grpc.CallOption) (*Ack, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(Ack)
@@ -89,6 +101,7 @@ func (c *coordinatorClient) DoCommit(ctx context.Context, in *TxRequest, opts ..
 type CoordinatorServer interface {
 	Prepare(context.Context, *PrepareRequest) (*PrepareResponse, error)
 	Commit(context.Context, *TxRequest) (*Ack, error)
+	Abort(context.Context, *TxRequest) (*Ack, error)
 	PreCommit(context.Context, *TxRequest) (*Ack, error)
 	DoCommit(context.Context, *TxRequest) (*Ack, error)
 	mustEmbedUnimplementedCoordinatorServer()
@@ -106,6 +119,9 @@ func (UnimplementedCoordinatorServer) Prepare(context.Context, *PrepareRequest) 
 }
 func (UnimplementedCoordinatorServer) Commit(context.Context, *TxRequest) (*Ack, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Commit not implemented")
+}
+func (UnimplementedCoordinatorServer) Abort(context.Context, *TxRequest) (*Ack, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Abort not implemented")
 }
 func (UnimplementedCoordinatorServer) PreCommit(context.Context, *TxRequest) (*Ack, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method PreCommit not implemented")
@@ -170,6 +186,24 @@ func _Coordinator_Commit_Handler(srv interface{}, ctx context.Context, dec func(
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Coordinator_Abort_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(TxRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CoordinatorServer).Abort(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Coordinator_Abort_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CoordinatorServer).Abort(ctx, req.(*TxRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _Coordinator_PreCommit_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(TxRequest)
 	if err := dec(in); err != nil {
@@ -220,6 +254,10 @@ var Coordinator_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "Commit",
 			Handler:    _Coordinator_Commit_Handler,
+		},
+		{
+			MethodName: "Abort",
+			Handler:    _Coordinator_Abort_Handler,
 		},
 		{
 			MethodName: "PreCommit",
